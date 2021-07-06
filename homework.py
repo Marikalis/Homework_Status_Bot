@@ -66,7 +66,7 @@ def main():
             else:
                 message = 'нет домашек'
             send_message(message)
-            time.sleep(5 * 60)  # Опрашивать раз в пять минут
+            time.sleep(20 * 60)  # Опрашивать раз в пять минут
 
         except Exception as e:
             logging.error(e, exc_info=True)
