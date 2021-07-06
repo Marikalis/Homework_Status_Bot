@@ -15,9 +15,6 @@ PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-# проинициализируйте бота здесь,
-# чтобы он был доступен в каждом нижеобъявленном методе,
-# и не нужно было прокидывать его в каждый вызов
 bot = Bot(token=TELEGRAM_TOKEN)
 
 logging.basicConfig(
@@ -29,6 +26,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
 logger.addHandler(handler)
+
 
 def parse_homework_status(homework):
     homework_name = homework['homework_name']
