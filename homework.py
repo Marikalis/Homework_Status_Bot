@@ -46,11 +46,7 @@ def get_homeworks(current_timestamp):
     homework_statuses_url = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
     headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
     payload = {'from_date': current_timestamp}
-    homework_statuses = requests.get(homework_statuses_url, headers=headers, params=payload).json()
-    if len(homework_statuses['homeworks']) > 0:
-        return parse_homework_status(homework_statuses['homeworks'][0])
-    else:
-        return 'нет домашек'
+    return requests.get(homework_statuses_url, headers=headers, params=payload).json()
 
 
 def send_message(message):
@@ -64,10 +60,16 @@ def main():
 
     while True:
         try:
-            send_message(get_homeworks(timestamp))
-            time.sleep(5)  # Опрашивать раз в пять минут
+            homeworks_statuses = get_homeworks(timestamp)
+            if len(homeworks_statuses['homeworks']) > 0:
+                message = parse_homework_status(homeworks_statuses['homeworks'][0])
+            else:
+                message = 'нет домашек'
+            send_message(message)
+            time.sleep(5 * 60)  # Опрашивать раз в пять минут
 
         except Exception as e:
+            logging.error(e, exc_info=True)
             print(f'Бот упал с ошибкой: {e}')
             time.sleep(5)
 
