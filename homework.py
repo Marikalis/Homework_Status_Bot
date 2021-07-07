@@ -78,9 +78,9 @@ def main():
             send_message(message)
             time.sleep(30 * 60)
 
-        except Exception as e:
-            logging.error(e, exc_info=True)
-            print(f'Бот упал с ошибкой: {e}')
+        except Exception as error:
+            logging.error(error, exc_info=True)
+            print(f'Бот упал с ошибкой: {error}')
             time.sleep(30)
 
 
