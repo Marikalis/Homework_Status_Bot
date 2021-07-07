@@ -18,6 +18,7 @@ HW_STATUSES_URL = \
 HEADERS = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
 UNEXPECTED_STATUS = 'Статус работы неизвестен.'
 PROJECT_CHECKED = ('У вас проверили работу \"{homework_name}\"!\n\n{verdict}')
+HOMEWORKS_KEY = 'homeworks'
 
 bot = Bot(token=TELEGRAM_TOKEN)
 
@@ -29,7 +30,7 @@ bot_dict = {'reviewing': 'Проект находится на ревью.',
 def parse_homework_status(homework):
     homework_status = homework['status']
     if homework_status is None or homework_status not in bot_dict:
-        return UNEXPECTED_STATUS
+        raise UNEXPECTED_STATUS
     verdict = bot_dict[homework_status]
     return PROJECT_CHECKED.format(
         verdict=verdict,
@@ -41,15 +42,23 @@ def get_homeworks(current_timestamp):
     homework_statuses_url = HW_STATUSES_URL
     headers = HEADERS
     payload = {'from_date': current_timestamp}
-    return requests.get(
-        homework_statuses_url,
-        headers=headers,
-        params=payload).json()
+    try:
+        response = requests.get(
+            homework_statuses_url,
+            headers=headers,
+            params=payload
+        ).json()
+    except requests.exceptions.RequestException as error:
+        raise f'Ошибка в ответе от сервера: {error}'
+    except TypeError as error:
+        raise f'Ошибка в при распаковке ответа от сервера: {error}'
+    except ValueError as error:
+        raise f'Ошибка в при распаковке ответа от сервера: {error}'
+    return response
 
 
 def send_message(message):
-    if message is not None:
-        return bot.send_message(CHAT_ID, message)
+    return bot.send_message(CHAT_ID, message)
 
 
 def main():
@@ -70,17 +79,17 @@ def main():
     while True:
         try:
             homeworks_statuses = get_homeworks(timestamp)
-            if len(homeworks_statuses['homeworks']) > 0:
-                message = parse_homework_status(
-                    homeworks_statuses['homeworks'][0])
-            else:
-                message = 'нет домашек'
-            send_message(message)
+            if HOMEWORKS_KEY not in homeworks_statuses:
+                raise UNEXPECTED_STATUS
+            homeworks = homeworks_statuses[HOMEWORKS_KEY]
+            if len(homeworks) > 0:
+                message = parse_homework_status(homeworks[0])
+            if message is not None:
+                send_message(message)
             time.sleep(30 * 60)
 
         except Exception as error:
             logging.error(error, exc_info=True)
-            print(f'Бот упал с ошибкой: {error}')
             time.sleep(30)
 
 
