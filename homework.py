@@ -1,11 +1,12 @@
 import os
 import time
-import requests
 import logging
+from logging.handlers import RotatingFileHandler
+import requests
 
 from telegram import Bot
-from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -14,19 +15,6 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 bot = Bot(token=TELEGRAM_TOKEN)
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename='program.log',
-    format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
-)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(
-    'my_logger.log',
-    maxBytes=50000000,
-    backupCount=5)
-logger.addHandler(handler)
 
 
 def parse_homework_status(homework):
@@ -55,11 +43,22 @@ def get_homeworks(current_timestamp):
 def send_message(message):
     if message is not None:
         return bot.send_message(CHAT_ID, message)
-    pass
 
 
 def main():
     timestamp = int(time.time())
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename=__file__ + '.log',
+        format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
+    )
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    handler = RotatingFileHandler(
+        'my_logger.log',
+        maxBytes=50000000,
+        backupCount=5)
+    logger.addHandler(handler)
 
     while True:
         try:
@@ -70,12 +69,12 @@ def main():
             else:
                 message = 'нет домашек'
             send_message(message)
-            time.sleep(20 * 60)  # Опрашивать раз в пять минут
+            time.sleep(30 * 60)  # Опрашивать раз в пять минут
 
         except Exception as e:
             logging.error(e, exc_info=True)
             print(f'Бот упал с ошибкой: {e}')
-            time.sleep(5)
+            time.sleep(30)
 
 
 if __name__ == '__main__':
