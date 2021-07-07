@@ -13,26 +13,33 @@ load_dotenv()
 PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+HW_STATUSES_URL = \
+    'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
+HEADERS = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
+UNEXPECTED_STATUS = 'Статус работы неизвестен.'
+PROJECT_CHECKED = ('У вас проверили работу \"{homework_name}\"!\n\n{verdict}')
 
 bot = Bot(token=TELEGRAM_TOKEN)
 
+bot_dict = {'reviewing': 'Проект находится на ревью.',
+            'rejected': 'К сожалению, в работе нашлись ошибки.',
+            'approved': 'Ревьюеру всё понравилось, работа зачтена!'}
+
 
 def parse_homework_status(homework):
-    homework_name = homework['homework_name']
     homework_status = homework['status']
-    if homework_status == 'reviewing':
-        verdict = 'Проект находится на ревью.'
-    elif homework_status == 'rejected':
-        verdict = 'К сожалению, в работе нашлись ошибки.'
-    else:
-        verdict = 'Ревьюеру всё понравилось, работа зачтена!'
-    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+    if homework_status is None or homework_status not in bot_dict:
+        return UNEXPECTED_STATUS
+    verdict = bot_dict[homework_status]
+    return PROJECT_CHECKED.format(
+        verdict=verdict,
+        homework_name=homework['homework_name']
+    )
 
 
 def get_homeworks(current_timestamp):
-    homework_statuses_url = \
-        'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
-    headers = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
+    homework_statuses_url = HW_STATUSES_URL
+    headers = HEADERS
     payload = {'from_date': current_timestamp}
     return requests.get(
         homework_statuses_url,
@@ -69,7 +76,7 @@ def main():
             else:
                 message = 'нет домашек'
             send_message(message)
-            time.sleep(30 * 60)  # Опрашивать раз в пять минут
+            time.sleep(30 * 60)
 
         except Exception as e:
             logging.error(e, exc_info=True)
