@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from logging.handlers import RotatingFileHandler
 
 import requests
 from dotenv import load_dotenv
@@ -28,6 +27,7 @@ CONNECTION_ERROR_MESSAGE = (
     'headers: \"{headers}\"'
     'params: \"{params}\"'
 )
+LOGGING_MESSAGE_ERROR = ('Не удалось выполнить итерацию. Ошибка: \"{error}\".')
 
 
 def parse_homework_status(homework):
@@ -85,8 +85,9 @@ def main():
 
         except Exception as error:
             logging.error(
-                msg='Не удалось выполнить итерацию. '
-                    f'Ошибка: {error}',
+                msg=LOGGING_MESSAGE_ERROR.format(
+                    error=error
+                ),
                 exc_info=True
             )
             time.sleep(30)
@@ -98,12 +99,4 @@ if __name__ == '__main__':
         filename=__file__ + '.log',
         format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
     )
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    handler = RotatingFileHandler(
-        'my_logger.log',
-        maxBytes=50000000,
-        backupCount=5
-    )
-    logger.addHandler(handler)
     main()
