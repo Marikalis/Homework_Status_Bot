@@ -1,12 +1,12 @@
+import json
+import logging
 import os
 import time
-import logging
 from logging.handlers import RotatingFileHandler
 
 import requests
-import json
-from telegram import Bot
 from dotenv import load_dotenv
+from telegram import Bot
 
 load_dotenv()
 
@@ -14,7 +14,7 @@ load_dotenv()
 PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-HOMEWORK_STATUSES_URL = ('https://praktikum.yandex.ru/'
+HOMEWORK_STATUSES_URL = ('https://practicum.yandex.ru/'
                          'api/user_api/homework_statuses/')
 UNEXPECTED_STATUS = 'Статус работы неизвестен.'
 PROJECT_CHECKED = ('У вас проверили работу \"{name}\"!\n\n{verdict}')
@@ -55,12 +55,11 @@ def get_homeworks(current_timestamp):
             f'params: {error.request.params}'
         )
     try:
-        json_response = response.json()
+        return response.json()
     except json.JSONDecodeError:
         raise ValueError(
             f'Ошибка в при распаковке ответа от сервера. Response: {response}'
         )
-    return json_response
 
 
 def send_message(message):
