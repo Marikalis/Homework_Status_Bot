@@ -16,10 +16,8 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 HOMEWORK_STATUSES_URL = ('https://practicum.yandex.ru/'
                          'api/user_api/homework_statuses/')
-UNEXPECTED_STATUS = 'Статус работы неизвестен.'
+UNEXPECTED_STATUS = ('Обнаружен неожиданный статус: \"{status}\"')
 PROJECT_CHECKED = ('У вас проверили работу \"{name}\"!\n\n{verdict}')
-
-BOT = Bot(token=TELEGRAM_TOKEN)
 
 VERDICTS = {'reviewing': 'Проект находится на ревью.',
             'rejected': 'К сожалению, в работе нашлись ошибки.',
@@ -29,7 +27,11 @@ VERDICTS = {'reviewing': 'Проект находится на ревью.',
 def parse_homework_status(homework):
     status = homework['status']
     if status not in VERDICTS:
-        raise ValueError(f'Обнаружен неподдерживаемый статус: {status}')
+        raise ValueError(
+            UNEXPECTED_STATUS.format(
+                status=status
+            )
+        )
     verdict = VERDICTS[status]
     return PROJECT_CHECKED.format(
         verdict=verdict,
@@ -63,11 +65,11 @@ def get_homeworks(current_timestamp):
 
 
 def send_message(message):
-    return BOT.send_message(CHAT_ID, message)
+    return Bot(token=TELEGRAM_TOKEN).send_message(CHAT_ID, message)
 
 
 def main():
-
+    send_message('че')
     while True:
         timestamp = int(time.time())
         try:
