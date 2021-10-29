@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import time
@@ -14,6 +13,7 @@ load_dotenv()
 PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+HEADERS = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
 HOMEWORK_STATUSES_URL = ('https://practicum.yandex.ru/'
                          'api/user_api/homework_statuses/')
 UNEXPECTED_STATUS = ('Обнаружен неожиданный статус: \"{status}\"')
@@ -22,6 +22,12 @@ PROJECT_CHECKED = ('У вас проверили работу \"{name}\"!\n\n{ve
 VERDICTS = {'reviewing': 'Проект находится на ревью.',
             'rejected': 'К сожалению, в работе нашлись ошибки.',
             'approved': 'Ревьюеру всё понравилось, работа зачтена!'}
+CONNECTION_ERROR_MESSAGE = (
+    'При выполнении запроса произошла ошибка: \"{error}\".'
+    'url: \"{homework_statuses_url}\"'
+    'headers: \"{headers}\"'
+    'params: \"{params}\"'
+)
 
 
 def parse_homework_status(homework):
@@ -32,36 +38,32 @@ def parse_homework_status(homework):
                 status=status
             )
         )
-    verdict = VERDICTS[status]
     return PROJECT_CHECKED.format(
-        verdict=verdict,
+        verdict=VERDICTS[status],
         name=homework['homework_name']
     )
 
 
 def get_homeworks(current_timestamp):
     homework_statuses_url = HOMEWORK_STATUSES_URL
-    payload = {'from_date': current_timestamp}
+    headers = HEADERS
+    params = {'from_date': current_timestamp}
     try:
         response = requests.get(
-            homework_statuses_url,
-            headers={'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'},
-            params=payload
+            homework_statuses_url=homework_statuses_url,
+            headers=headers,
+            params=params
         )
     except requests.exceptions.RequestException as error:
-        raise AssertionError(
-            f'Ошибка в ответе от сервера: {error}.'
-            f'Код: {error.response.status_code}'
-            f'url: {error.request.url}'
-            f'headers: {error.request.headers}'
-            f'params: {error.request.params}'
+        raise ConnectionError(
+            CONNECTION_ERROR_MESSAGE.format(
+                error=error,
+                homework_statuses_url=homework_statuses_url,
+                headers=headers,
+                params=params
+            )
         )
-    try:
-        return response.json()
-    except json.JSONDecodeError:
-        raise ValueError(
-            f'Ошибка в при распаковке ответа от сервера. Response: {response}'
-        )
+    return response.json()
 
 
 def send_message(message):
