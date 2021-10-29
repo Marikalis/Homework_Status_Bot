@@ -50,7 +50,7 @@ def get_homeworks(current_timestamp):
     params = {'from_date': current_timestamp}
     try:
         response = requests.get(
-            homework_statuses_url=homework_statuses_url,
+            url=homework_statuses_url,
             headers=headers,
             params=params
         )
@@ -71,9 +71,8 @@ def send_message(message):
 
 
 def main():
-    send_message('че')
+    timestamp = 0
     while True:
-        timestamp = int(time.time())
         try:
             homeworks_statuses = get_homeworks(timestamp)
             if 'homeworks' in homeworks_statuses:
@@ -81,6 +80,7 @@ def main():
                 if len(homeworks) > 0:
                     message = parse_homework_status(homeworks[0])
                     send_message(message)
+            timestamp = int(time.time())
             time.sleep(30 * 60)
 
         except Exception as error:
