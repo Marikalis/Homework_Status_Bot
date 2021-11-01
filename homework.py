@@ -22,9 +22,9 @@ VERDICTS = {'reviewing': 'Проект находится на ревью.',
             'rejected': 'К сожалению, в работе нашлись ошибки.',
             'approved': 'Ревьюеру всё понравилось, работа зачтена!'}
 CONNECTION_ERROR_MESSAGE = (
-    'При выполнении запроса произошла ошибка: \"{error}\".'
-    'url: \"{homework_statuses_url}\"'
-    'headers: \"{headers}\"'
+    'При выполнении запроса произошла ошибка: \"{error}\".\n'
+    'url: \"{homework_statuses_url}\"\n'
+    'headers: \"{headers}\"\n'
     'params: \"{params}\"'
 )
 LOGGING_MESSAGE_ERROR = ('Не удалось выполнить итерацию. Ошибка: \"{error}\".')
