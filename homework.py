@@ -73,6 +73,17 @@ def get_api_answer(url, current_timestamp):
     return response.json()
 
 
+def check_response(response):
+    if 'homeworks' in response:
+        homeworks = response['homeworks']
+        if len(homeworks) > 0:
+            homework = homeworks[0]
+            return parse_status(homework)
+    raise ValueError(
+        "Ответ от сервера не содержит домашние работы"
+    )
+
+
 def send_message(bot, message):
     """Sending a message via telegram."""
     return bot.send_message(CHAT_ID, message)
@@ -87,11 +98,8 @@ def main():
                 HOMEWORK_STATUSES_URL,
                 timestamp
             )
-            if 'homeworks' in homeworks_statuses:
-                homeworks = homeworks_statuses['homeworks']
-                if len(homeworks) > 0:
-                    message = parse_status(homeworks[0])
-                    send_message(Bot(token=TELEGRAM_TOKEN), message)
+            message = check_response(homeworks_statuses)
+            send_message(Bot(token=TELEGRAM_TOKEN), message)
             timestamp = int(time.time())
             time.sleep(RETRY_TIME)
 
