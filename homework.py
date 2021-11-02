@@ -70,6 +70,9 @@ def __send_message(message):
     return Bot(token=TELEGRAM_TOKEN).send_message(CHAT_ID, message)
 
 
+"""Main entry point"""
+
+
 def main():
     timestamp = 0
     while True:
