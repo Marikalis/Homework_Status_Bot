@@ -13,14 +13,15 @@ PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 HEADERS = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
+RETRY_TIME = 300
 HOMEWORK_STATUSES_URL = ('https://practicum.yandex.ru/'
                          'api/user_api/homework_statuses/')
 UNEXPECTED_STATUS = ('Обнаружен неожиданный статус: \"{status}\"')
-PROJECT_CHECKED = ('У вас проверили работу \"{name}\"!\n\n{verdict}')
+PROJECT_CHECKED = ('Изменился статус проверки работы \"{name}\"!\n\n{verdict}')
 
-VERDICTS = {'reviewing': 'Проект находится на ревью.',
-            'rejected': 'К сожалению, в работе нашлись ошибки.',
-            'approved': 'Ревьюеру всё понравилось, работа зачтена!'}
+VERDICTS = {'reviewing': 'Работа взята на проверку ревьюером.',
+            'rejected': 'Работа проверена, в ней нашлись ошибки.',
+            'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!'}
 CONNECTION_ERROR_MESSAGE = (
     'При выполнении запроса произошла ошибка: \"{error}\".\n'
     'url: \"{homework_statuses_url}\"\n'
@@ -45,14 +46,13 @@ def parse_status(homework):
     )
 
 
-def get_api_answer(current_timestamp):
+def get_api_answer(url, current_timestamp):
     """Getting statuses from the server."""
-    homework_statuses_url = HOMEWORK_STATUSES_URL
     headers = HEADERS
     params = {'from_date': current_timestamp}
     try:
         response = requests.get(
-            url=homework_statuses_url,
+            url=url,
             headers=headers,
             params=params
         )
@@ -60,17 +60,22 @@ def get_api_answer(current_timestamp):
         raise ConnectionError(
             CONNECTION_ERROR_MESSAGE.format(
                 error=error,
-                homework_statuses_url=homework_statuses_url,
+                homework_statuses_url=url,
                 headers=headers,
                 params=params
             )
         )
+    if response.status_code != 200:
+        raise ConnectionError(
+            f'Получен неожиданный код в ответе'
+            f'от сервера: {response.status_code}'
+        )
     return response.json()
 
 
-def send_message(message):
+def send_message(bot, message):
     """Sending a message via telegram."""
-    return Bot(token=TELEGRAM_TOKEN).send_message(CHAT_ID, message)
+    return bot.send_message(CHAT_ID, message)
 
 
 def main():
@@ -78,14 +83,17 @@ def main():
     timestamp = 0
     while True:
         try:
-            homeworks_statuses = get_api_answer(timestamp)
+            homeworks_statuses = get_api_answer(
+                HOMEWORK_STATUSES_URL,
+                timestamp
+            )
             if 'homeworks' in homeworks_statuses:
                 homeworks = homeworks_statuses['homeworks']
                 if len(homeworks) > 0:
                     message = parse_status(homeworks[0])
-                    send_message(message)
+                    send_message(Bot(token=TELEGRAM_TOKEN), message)
             timestamp = int(time.time())
-            time.sleep(30 * 60)
+            time.sleep(RETRY_TIME)
 
         except Exception as error:
             logging.error(
