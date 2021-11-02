@@ -78,6 +78,7 @@ def get_api_answer(url, current_timestamp):
 
 
 def check_response(response):
+    """Checking responces."""
     if 'homeworks' in response:
         homeworks = response['homeworks']
         if len(homeworks) > 0:
