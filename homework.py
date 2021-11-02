@@ -30,7 +30,7 @@ CONNECTION_ERROR_MESSAGE = (
 LOGGING_MESSAGE_ERROR = ('Не удалось выполнить итерацию. Ошибка: \"{error}\".')
 
 
-def parse_homework_status(homework):
+def __parse_homework_status(homework):
     status = homework['status']
     if status not in VERDICTS:
         raise ValueError(
@@ -44,7 +44,7 @@ def parse_homework_status(homework):
     )
 
 
-def get_homeworks(current_timestamp):
+def __get_homeworks(current_timestamp):
     homework_statuses_url = HOMEWORK_STATUSES_URL
     headers = HEADERS
     params = {'from_date': current_timestamp}
@@ -66,7 +66,7 @@ def get_homeworks(current_timestamp):
     return response.json()
 
 
-def send_message(message):
+def __send_message(message):
     return Bot(token=TELEGRAM_TOKEN).send_message(CHAT_ID, message)
 
 
@@ -74,12 +74,12 @@ def main():
     timestamp = 0
     while True:
         try:
-            homeworks_statuses = get_homeworks(timestamp)
+            homeworks_statuses = __get_homeworks(timestamp)
             if 'homeworks' in homeworks_statuses:
                 homeworks = homeworks_statuses['homeworks']
                 if len(homeworks) > 0:
-                    message = parse_homework_status(homeworks[0])
-                    send_message(message)
+                    message = __parse_homework_status(homeworks[0])
+                    __send_message(message)
             timestamp = int(time.time())
             time.sleep(30 * 60)
 
