@@ -71,9 +71,7 @@ def __send_message(message):
 
 
 def main():
-    '''
-    Main entry point
-    '''
+    '''Main entry point'''
     timestamp = 0
     while True:
         try:
