@@ -28,7 +28,10 @@ CONNECTION_ERROR_MESSAGE = (
     'headers: \"{headers}\"\n'
     'params: \"{params}\"'
 )
+UNEXPECTED_RESPONCE_STATUS_CODE = ('Получен неожиданный код в ответе '
+                                   'от сервера: \"{status_code}\".')
 LOGGING_MESSAGE_ERROR = ('Не удалось выполнить итерацию. Ошибка: \"{error}\".')
+EMPTY_RESPONCE_MESSAGE = 'Ответ от сервера не содержит домашние работы'
 
 
 def parse_status(homework):
@@ -67,8 +70,9 @@ def get_api_answer(url, current_timestamp):
         )
     if response.status_code != 200:
         raise ConnectionError(
-            f'Получен неожиданный код в ответе'
-            f'от сервера: {response.status_code}'
+            UNEXPECTED_RESPONCE_STATUS_CODE.format(
+                status_code=response.status_code
+            )
         )
     return response.json()
 
@@ -79,9 +83,7 @@ def check_response(response):
         if len(homeworks) > 0:
             homework = homeworks[0]
             return parse_status(homework)
-    raise ValueError(
-        "Ответ от сервера не содержит домашние работы"
-    )
+    raise ValueError(EMPTY_RESPONCE_MESSAGE)
 
 
 def send_message(bot, message):
