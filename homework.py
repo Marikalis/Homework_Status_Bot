@@ -24,7 +24,7 @@ VERDICTS = {'reviewing': 'Работа взята на проверку ревь
             'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!'}
 CONNECTION_ERROR_MESSAGE = (
     'При выполнении запроса произошла ошибка: \"{error}\".\n'
-    'url: \"{homework_statuses_url}\"\n'
+    'url: \"{url}\"\n'
     'headers: \"{headers}\"\n'
     'params: \"{params}\"'
 )
@@ -63,7 +63,7 @@ def get_api_answer(url, current_timestamp):
         raise ConnectionError(
             CONNECTION_ERROR_MESSAGE.format(
                 error=error,
-                homework_statuses_url=url,
+                url=url,
                 headers=headers,
                 params=params
             )
