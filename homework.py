@@ -60,42 +60,38 @@ def parse_status(homework):
 
 def get_api_answer(url, current_timestamp):
     """Getting statuses from the server."""
-    headers = HEADERS
     params = {'from_date': current_timestamp}
+    request_parameters = dict(
+        url=url,
+        headers=HEADERS,
+        params=params
+    )
     try:
-        response = requests.get(
-            url=url,
-            headers=headers,
-            params=params
-        )
+        response = requests.get(**request_parameters)
     except requests.exceptions.RequestException as error:
         raise ConnectionError(
             CONNECTION_ERROR_MESSAGE.format(
                 error=error,
-                url=url,
-                headers=headers,
-                params=params
+                **request_parameters
             )
         )
     if response.status_code != 200:
-        raise ConnectionError(
+        raise RuntimeError(
             UNEXPECTED_RESPONSE_STATUS_CODE.format(
                 status_code=response.status_code,
-                url=url,
-                headers=headers,
-                params=params
+                **request_parameters
             )
         )
     json = response.json()
     json_error_keys = ['error', 'code']
     for key in json_error_keys:
         if key in json:
-            raise ValueError(
+            raise RuntimeError(
                 ERROR_RESPONSE_JSON_KEY.format(
                     key=key,
                     value=json[key],
                     url=url,
-                    headers=headers,
+                    headers=HEADERS,
                     params=params
                 )
             )
@@ -109,7 +105,7 @@ def check_response(response):
     homeworks = response['homeworks']
     if len(homeworks) == 0:
         raise ValueError(EMPTY_RESPONSE_MESSAGE)
-    return parse_status(homeworks[0]), response['current_date']
+    return parse_status(homeworks[0])
 
 
 def send_message(bot, message):
@@ -120,16 +116,16 @@ def send_message(bot, message):
 def main():
     """Main entry point."""
     timestamp = 0
+    bot = Bot(token=TELEGRAM_TOKEN)
     while True:
         try:
-            homeworks_statuses = get_api_answer(
+            api_answer = get_api_answer(
                 HOMEWORK_STATUSES_URL,
                 timestamp
             )
-            message, timestamp = check_response(homeworks_statuses)
-            print(message)
-            print(timestamp)
-            send_message(Bot(token=TELEGRAM_TOKEN), message)
+            message = check_response(api_answer)
+            timestamp = api_answer['current_date']
+            send_message(bot, message)
             time.sleep(RETRY_TIME)
 
         except Exception as error:
