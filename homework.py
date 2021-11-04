@@ -28,10 +28,19 @@ CONNECTION_ERROR_MESSAGE = (
     'headers: \"{headers}\"\n'
     'params: \"{params}\"'
 )
-UNEXPECTED_RESPONCE_STATUS_CODE = ('Получен неожиданный код в ответе '
-                                   'от сервера: \"{status_code}\".')
+UNEXPECTED_RESPONSE_STATUS_CODE = (
+    'Получен неожиданный код в ответе от сервера: \"{status_code}\".\n'
+    'url: \"{url}\"\n'
+    'headers: \"{headers}\"\n'
+    'params: \"{params}\"')
+ERROR_RESPONSE_JSON_KEY = (
+    'В ответе от сервера найдена ошибка с ключём: \"{key}\".\n'
+    'значение: \"{value}\".\n'
+    'url: \"{url}\"\n'
+    'headers: \"{headers}\"\n'
+    'params: \"{params}\"')
 LOGGING_MESSAGE_ERROR = ('Не удалось выполнить итерацию. Ошибка: \"{error}\".')
-EMPTY_RESPONCE_MESSAGE = 'Ответ от сервера не содержит домашние работы'
+EMPTY_RESPONSE_MESSAGE = 'Ответ от сервера не содержит домашние работы'
 
 
 def parse_status(homework):
@@ -70,21 +79,37 @@ def get_api_answer(url, current_timestamp):
         )
     if response.status_code != 200:
         raise ConnectionError(
-            UNEXPECTED_RESPONCE_STATUS_CODE.format(
-                status_code=response.status_code
+            UNEXPECTED_RESPONSE_STATUS_CODE.format(
+                status_code=response.status_code,
+                url=url,
+                headers=headers,
+                params=params
             )
         )
-    return response.json()
+    json = response.json()
+    json_error_keys = ['error', 'code']
+    for key in json_error_keys:
+        if key in json:
+            raise ValueError(
+                ERROR_RESPONSE_JSON_KEY.format(
+                    key=key,
+                    value=json[key],
+                    url=url,
+                    headers=headers,
+                    params=params
+                )
+            )
+    return json
 
 
 def check_response(response):
-    """Checking responces."""
-    if 'homeworks' in response:
-        homeworks = response['homeworks']
-        if len(homeworks) > 0:
-            homework = homeworks[0]
-            return parse_status(homework)
-    raise ValueError(EMPTY_RESPONCE_MESSAGE)
+    """Checking RESPONSEs."""
+    if 'homeworks' not in response:
+        raise ValueError(EMPTY_RESPONSE_MESSAGE)
+    homeworks = response['homeworks']
+    if len(homeworks) == 0:
+        raise ValueError(EMPTY_RESPONSE_MESSAGE)
+    return parse_status(homeworks[0]), response['current_date']
 
 
 def send_message(bot, message):
@@ -101,9 +126,10 @@ def main():
                 HOMEWORK_STATUSES_URL,
                 timestamp
             )
-            message = check_response(homeworks_statuses)
+            message, timestamp = check_response(homeworks_statuses)
+            print(message)
+            print(timestamp)
             send_message(Bot(token=TELEGRAM_TOKEN), message)
-            timestamp = int(time.time())
             time.sleep(RETRY_TIME)
 
         except Exception as error:
