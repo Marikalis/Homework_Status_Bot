@@ -124,7 +124,7 @@ def main():
                 timestamp
             )
             message = check_response(api_answer)
-            timestamp = api_answer['current_date']
+            timestamp = api_answer.get('current_date', timestamp)
             send_message(bot, message)
             time.sleep(RETRY_TIME)
 
